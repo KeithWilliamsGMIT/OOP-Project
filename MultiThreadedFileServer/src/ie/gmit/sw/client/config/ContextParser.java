@@ -3,20 +3,17 @@
  * 2/12/2016
  */
 
-package ie.gmit.sw;
+package ie.gmit.sw.client.config;
+
+import ie.gmit.sw.client.Context;
 
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 
 public class ContextParser {
-	private Context ctx;
-
-	public ContextParser(Context ctx) {
-		super();
-		this.ctx = ctx;
-	}
+	private Context ctx = new Context(); // Aggregation
 	
-	public void init () throws Throwable {
+	public void parse () throws Throwable {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
 		Document doc = db.parse(Context.CONF_FILE);

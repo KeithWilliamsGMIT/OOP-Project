@@ -1,10 +1,13 @@
 /*
  * Keith Williams (G00324844)
  * 2/12/2016
- * A bean class containing variables available to entire project
  */
 
-package ie.gmit.sw;
+/**
+ * A bean class containing variables available to entire project.
+ */
+
+package ie.gmit.sw.client;
 
 public class Context {
 	public static final String CONF_FILE = "client-config.xml";

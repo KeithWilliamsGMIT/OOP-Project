@@ -34,4 +34,14 @@ public class Resources {
 		
 		return filenames;
 	}
+	
+	/**
+	 * @param directory The path to the directory where the file is stored.
+	 * @param filename The name of the file in the directory to download.
+	 * @return
+	 */
+	public File getFile(String directory, String filename) {
+		File file = new File(directory + "/" + filename);
+		return file;
+	}
 }

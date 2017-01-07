@@ -10,6 +10,7 @@
 package ie.gmit.sw.client;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class UI {
@@ -32,10 +33,16 @@ public class UI {
 			// Continue to prompt the user for an option
 			// Until they enter a number between 1 and 4
 			do {
+				// Ensure there is an integer to scan
+				while(!sc.hasNextInt()) {
+					System.out.println("Invalid input");
+					sc.nextLine();
+				}
+				
 				option = sc.nextInt();
 				
 				if (option < 1 || option > 4) {
-					System.out.println("Invalid input:");
+					System.out.println("Invalid input");
 				}
 			} while (option < 1 || option > 4);
 			
@@ -49,7 +56,7 @@ public class UI {
 				// Query the server and display the list of files
 				// that are available for download
 				try {
-					ArrayList<String> filenames = new ArrayList<String>(connection.requestFilenames());
+					List<String> filenames = new ArrayList<String>(connection.requestFilenames());
 					
 					// Iterate through the list and print file names
 					for (int i = 0; i < filenames.size(); i++) {
@@ -62,9 +69,11 @@ public class UI {
 				
 				break;
 			case 3:
-				// Prompt the user to specify a file from this list
+				// Prompt the user to specify a file to download
 				// and then download the file from the server
-				connection.downloadFile();
+				System.out.println("Enter the name of file to download> ");
+				String filename = sc.next();
+				connection.downloadFile(filename);
 				break;
 			}
 		} while(option != 4);

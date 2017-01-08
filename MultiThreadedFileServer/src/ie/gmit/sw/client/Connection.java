@@ -4,12 +4,14 @@
  */
 
 /**
- * A class responsible for connecting to the server and requesting resources.
+ * A class responsible for connecting to the server and requesting resources
+ * and closing the connection.
  */
 
 package ie.gmit.sw.client;
 
-import ie.gmit.sw.client.config.ContextParser;
+import ie.gmit.sw.client.config.Context;
+import ie.gmit.sw.requests.*;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -25,24 +27,18 @@ public class Connection {
 	private Context context; // Aggregation
 
 	// Constructors
-	public Connection() {
-		ContextParser parser = new ContextParser();
-
-		try {
-			parser.parse();
-		} catch (Throwable e) {
-			System.out.println("ERROR: " + e.getMessage());
-		}
-
-		context = parser.getCtx();
+	public Connection(Context context) {
+		this.context = context;
 	}
-
+	
+	// Methods
 	/**
-	 * Open a new socket connection to the server.
+	 * Open a new socket connection to the server using the information
+	 * contained in the Context object.
 	 * @throws Exception
 	 */
 	public void openSocket() throws Exception {
-		socket = new Socket("localhost", context.getPort());
+		socket = new Socket(context.getHost(), context.getPort());
 	}
 
 	/**
@@ -52,8 +48,8 @@ public class Connection {
 	 * @throws Exception 
 	 */
 	public List<String> requestFilenames() throws Exception {
-		// The message to send to the server
-		final String request = "GET /files HTTP/1.1\n\n";
+		// The request to send to the server
+		Requestable request = new Request("/files", socket.getLocalAddress().toString());
 
 		// Send request to server
 		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -63,7 +59,7 @@ public class Connection {
 		// Deserialise list of strings
 		ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 		List<String> filenames = (List<String>) in.readObject();
-
+		
 		return filenames;
 	}
 
@@ -79,8 +75,8 @@ public class Connection {
 	 * @throws Exception
 	 */
 	public void downloadFile(String filename) throws Exception {
-		// The message to send to the server
-		final String request = "GET /file HTTP/1.1\n\n" + filename;
+		// The request to send to the server
+		Requestable request = new Request("/file/" + filename, socket.getLocalAddress().toString());
 		final String path = context.getDownloadDir() + "/" + filename;
 
 		// Send request to server
@@ -109,6 +105,7 @@ public class Connection {
 			int bytesRead = is.read(bytes, 0, bytes.length);
 			bos.write(bytes, 0, bytesRead);
 			bos.flush();
+			bos.close();
 			System.out.println("Download Complete!");
 		} else {
 			System.out.println(filename + " was not found!");
@@ -120,8 +117,8 @@ public class Connection {
 	 * @throws IOException
 	 */
 	public void closeConnection() throws IOException {
-		// The message to send to the server
-		final String request = "POST /logout HTTP/1.1";
+		// The request to send to the server
+		Requestable request = new Request("/exit", socket.getLocalAddress().toString());
 
 		// Send request to server
 		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());

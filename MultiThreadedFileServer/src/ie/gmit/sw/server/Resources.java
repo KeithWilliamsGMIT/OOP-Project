@@ -4,7 +4,7 @@
  */
 
 /**
- * Manage all resources on the server.
+ * The Resources object manage all resources on the server.
  */
 
 package ie.gmit.sw.server;
@@ -30,13 +30,15 @@ public class Resources {
 	public List<String> getFileNames() {
 		List<String> filenames = new ArrayList<String>();
 
-		// If this pathname does not denote a directory
+		// If the path does not denote a directory
 		// then listFiles() returns null
 		File[] files = new File(path).listFiles();
 		
-		for (File file : files) {
-			if (file.isFile()) {
-				filenames.add(file.getName());
+		if (files != null) {
+			for (File file : files) {
+				if (file.isFile()) {
+					filenames.add(file.getName());
+				}
 			}
 		}
 		
@@ -44,8 +46,9 @@ public class Resources {
 	}
 	
 	/**
+	 * 
 	 * @param filename The name of the file in the directory to download.
-	 * @return
+	 * @return A file object.
 	 */
 	public File getFile(String filename) {
 		File file = new File(path + "/" + filename);

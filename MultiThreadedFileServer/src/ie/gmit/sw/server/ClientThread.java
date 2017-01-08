@@ -1,4 +1,16 @@
+/*
+ * Keith Williams (G00324844)
+ * 8/1/2016
+ */
+
+/**
+ * When a client connects to the server, a new ClientThread is created
+ * and is assigned to the client, making it a multi-threaded server.
+ */
+
 package ie.gmit.sw.server;
+
+import ie.gmit.sw.requests.*;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -8,22 +20,30 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 
 // A new ClientThread class is created for each new client.
 public class ClientThread implements Runnable {
 	private Socket socket; // Aggregation
-	private BlockingQueue<String> loggingQueue; // Aggregation
+	private BlockingQueue<Requestable> loggingQueue; // Aggregation
 	private Resources resources; // Aggregation
 	private volatile boolean keepRunning = true;
 
 	// Constructors
-	public ClientThread(Socket request, BlockingQueue<String> loggingQueue, Resources resources) {
+	public ClientThread(Socket request, BlockingQueue<Requestable> loggingQueue, Resources resources) {
 		this.socket = request;
 		this.loggingQueue = loggingQueue;
 		this.resources = resources;
 	}
-
+	
+	/**
+	 * Continue to receive requests from the client until they exit or
+	 * a connection problem occurs. Once this method terminates, the
+	 * client will be unable to make any further requests. When a
+	 * request is received, the thread will send a different resource
+	 * to the client based on the request.
+	 */
 	public void run() {
 		// Keep the thread alive
 		do {
@@ -32,33 +52,36 @@ public class ClientThread implements Runnable {
 			try {
 				// Read and print the request
 				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-				String request = (String)in.readObject();
-				String initialLine = request.split("\n\n")[0];
-				System.out.println(request);
+				Requestable request = (Request)in.readObject();
+				String[] paths = request.getCommand().split("/", 3);
 
 				try {
 					// Depending on the request header, return a different resource
-					if (initialLine.equals("GET /files HTTP/1.1")) {
+					if (paths.length == 2 && paths[1].equals("files")) {
 						getFilenames();
-					} else if (initialLine.equals("GET /file HTTP/1.1")) {
-						String filename = request.split("\n\n")[1];
+					} else if (paths.length > 2 && paths[1].equals("file")) {
+						String filename = paths[2];
 						downloadFile(filename);
-					} else if (initialLine.equals("POST /logout HTTP/1.1")) {
+					} else if (paths.length == 2 && paths[1].equals("exit")) {
 						// Stop the while loop so that this thread will not
-						// accept any more requests from the client
+						// accept any more requests from the client.
 						keepRunning = false;
-					} else {
-						loggingQueue.put("[WARNING] " + request);
 					}
 
 					// Add to logger queue
-					loggingQueue.put("[INFO] " + request);
+					loggingQueue.put(request);
 				} catch (Exception e) {
 					// Add to logger queue
-					loggingQueue.put("[ERROR] " + request);
+					loggingQueue.put(request);
 
 					System.out.println("ERROR: " + e.getMessage() + " from " +  socket.getRemoteSocketAddress());
 				}
+			} catch (SocketException se) {
+				// Stop the while loop so that this thread will not accept any
+				// more requests from the client if a SocketException occurs.
+				// The client must reconnect to make sequential requests.
+				keepRunning = false;
+				System.out.println("ERROR: " + se.getMessage() + " from " +  socket.getRemoteSocketAddress());
 			} catch (Exception e) {
 				System.out.println("ERROR: " + e.getMessage() + " from " +  socket.getRemoteSocketAddress());
 			}
@@ -95,7 +118,6 @@ public class ClientThread implements Runnable {
 		if (fileExists) {
 			// Get length of file
 			int fileLength = (int) file.length();
-			System.out.println("File Length: " + fileLength);
 
 			// Write file length
 			oos.writeObject(fileLength);

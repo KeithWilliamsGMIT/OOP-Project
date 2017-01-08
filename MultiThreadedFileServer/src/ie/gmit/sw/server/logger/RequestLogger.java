@@ -13,6 +13,9 @@
 
 package ie.gmit.sw.server.logger;
 
+import ie.gmit.sw.requests.PoisonRequest;
+import ie.gmit.sw.requests.Requestable;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,12 +24,12 @@ import java.util.concurrent.BlockingQueue;
 
 public class RequestLogger implements Runnable {
 	private final String FILENAME = "log.txt";
-	private BlockingQueue<String> queue; // Aggregation
+	private BlockingQueue<Requestable> queue; // Aggregation
 	private Writer writer;
 	private volatile boolean keepRunning = true;
 	
 	// Constructors
-	public RequestLogger(BlockingQueue<String> queue) throws IOException {
+	public RequestLogger(BlockingQueue<Requestable> queue) throws IOException {
 		super();
 		this.queue = queue;
 		this.writer = new FileWriter(new File(FILENAME), true);
@@ -45,10 +48,17 @@ public class RequestLogger implements Runnable {
 			while (keepRunning) {
 				try {
 					// Blocking call
-					String str = queue.take();
-					System.out.println(str);
-					writer.write(str + "\n");
-					writer.flush();
+					Requestable request = queue.take();
+					
+					// If the next object taken of the queue is a PoisonRequest
+					// Exit the while loop and let the thread terminate
+					if (request instanceof PoisonRequest) {
+						keepRunning = false;
+					} else {
+						// Else write the request to the log file
+						writer.write(request.toString() + "\n");
+						writer.flush();
+					}
 				} catch (InterruptedException e) {
 					System.out.println("ERROR: " + e.getMessage());
 				}

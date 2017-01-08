@@ -15,12 +15,18 @@ import java.util.List;
 import java.util.Scanner;
 
 public class UI {
+	private Connection connection; // Aggregation
+	
+	// Constructors
+	public UI(Connection connection) {
+		this.connection = connection;
+	}
 
+	// Methods
 	// Start the client application by displaying a menu with 4 options
 	public void start() {
 		int option;
 		Scanner sc = new Scanner(System.in);
-		Connection connection = new Connection();
 
 		// Loop until the user chooses to quit the application
 		do {
@@ -58,7 +64,9 @@ public class UI {
 					// Query the server and display the list of files
 					// that are available for download
 					List<String> filenames = new ArrayList<String>(connection.requestFilenames());
-
+					 
+					System.out.println("There are " + filenames.size() + " file(s) available to download from the server");
+					
 					// Iterate through the list and print file names
 					for (int i = 0; i < filenames.size(); i++) {
 						System.out.println((i + 1) + ") " + filenames.get(i));

@@ -3,16 +3,31 @@
  * 2/12/2016
  */
 
+/**
+ * The ContextParser is used to parse a config file, in XML format,
+ * containing information necessary for the client to connect to the
+ * server.
+ */
+
 package ie.gmit.sw.client.config;
 
-import ie.gmit.sw.client.Context;
-
 import javax.xml.parsers.*;
+
 import org.w3c.dom.*;
 
 public class ContextParser {
-	private Context ctx = new Context(); // Aggregation
-
+	private Context context; // Aggregation
+	
+	// Constructors
+	public ContextParser(Context context) {
+		super();
+		this.context = context;
+	}
+	
+	/**
+	 * Parse the XML file and store information in a Context object.
+	 * @throws Throwable
+	 */
 	public void parse () throws Throwable {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
@@ -27,7 +42,7 @@ public class ContextParser {
 
 		for (int j = 0; j < atts.getLength(); j++) {
 			if (atts.item(j).getNodeName().equals("username")) {
-				ctx.setHost(atts.item(j).getNodeValue());
+				context.setHost(atts.item(j).getNodeValue());
 			}
 		}
 
@@ -39,22 +54,18 @@ public class ContextParser {
 				Element e = (Element) next;
 
 				if (e.getNodeName().equals("server-host")) {
-					ctx.setHost(e.getFirstChild().getNodeValue());
+					context.setHost(e.getFirstChild().getNodeValue());
 				} else if (e.getNodeName().equals("server-port")) {
 					int port = new Integer(e.getFirstChild().getNodeValue());
-					ctx.setPort(port);
+					context.setPort(port);
 				} else if (e.getNodeName().equals("download-dir")) {
-					ctx.setDownloadDir(e.getFirstChild().getNodeValue());
+					context.setDownloadDir(e.getFirstChild().getNodeValue());
 				}
 			}
 		}
 	}
 
-	public Context getCtx() {
-		return ctx;
-	}
-
-	public void setCtx(Context ctx) {
-		this.ctx = ctx;
+	public Context getContext() {
+		return context;
 	}
 }

@@ -12,132 +12,122 @@ package ie.gmit.sw.client;
 import ie.gmit.sw.client.config.ContextParser;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class Connection {
 	private Socket socket; // Full composition
 	private Context context; // Aggregation
-	
+
+	// Constructors
 	public Connection() {
 		ContextParser parser = new ContextParser();
-		
+
 		try {
 			parser.parse();
 		} catch (Throwable e) {
-			e.printStackTrace();
+			System.out.println("ERROR: " + e.getMessage());
 		}
-		
+
 		context = parser.getCtx();
 	}
 
-	// Open a socket to the server
-	public void openSocket() {
-		try {
-			socket = new Socket("localhost", context.getPort());
-		} catch (Exception e) {
-			System.out.println("Error: " + e.getMessage());
-		}
-	}
-	
 	/**
-	 * Return all files stored on the server.
-	 * @return List of filenames
-	 * @throws ExecutionException 
-	 * @throws InterruptedException 
+	 * Open a new socket connection to the server.
+	 * @throws Exception
 	 */
-	public List<String> requestFilenames() throws InterruptedException, ExecutionException {
+	public void openSocket() throws Exception {
+		socket = new Socket("localhost", context.getPort());
+	}
+
+	/**
+	 * Retrieve a list of filenames that are available to
+	 * download from the server.
+	 * @return List of filenames.
+	 * @throws Exception 
+	 */
+	public List<String> requestFilenames() throws Exception {
 		// The message to send to the server
 		final String request = "GET /files HTTP/1.1\n\n";
-		
-		ExecutorService pool = Executors.newSingleThreadExecutor();
-		Future<List<String>> list;
-		
-		list = pool.submit(new Callable<List<String>>() {
-			public List<String> call() {
-				try {
-					// Send request to server
-					ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-					out.writeObject(request);
-					out.flush();
-					
-					Thread.yield();
-					
-					// Deserialise list of strings
-					ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-					List<String> filenames = (List<String>) in.readObject();
-					return filenames;
-				} catch (Exception e) {
-					System.out.println("Error: " + e.getMessage());
-				}
-				
-				return null;
-			}
-		});
-		
-		List<String> filenames = new ArrayList<String>();
-		
-		// Get will block and wait until the callable is completed
-		filenames = list.get();
-		
+
+		// Send request to server
+		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+		out.writeObject(request);
+		out.flush();
+
+		// Deserialise list of strings
+		ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+		List<String> filenames = (List<String>) in.readObject();
+
 		return filenames;
 	}
-	
+
 	/**
-	 * @param filename
-	 * Download a file  from the server. Save the file in the directory specified in the config file.
+	 * Download a file from the server. Save the file in the
+	 * directory specified in the config file. This method
+	 * receives three pieces of information. First is a boolean
+	 * which tells the user if the file they specified exists
+	 * on the server. Second is the size of the file. Third is
+	 * the files contents.
+	 * @param filename - The name of the file to be downloaded
+	 * from the server.
+	 * @throws Exception
 	 */
-	public void downloadFile(String filename) {
+	public void downloadFile(String filename) throws Exception {
 		// The message to send to the server
 		final String request = "GET /file HTTP/1.1\n\n" + filename;
 		final String path = context.getDownloadDir() + "/" + filename;
-		
-		Thread thread = new Thread(new Runnable() {
-			public void run() {
-				try {
-					// Send request to server
-					ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-					out.writeObject(request);
-					out.flush();
-					
-					Thread.yield();
-					
-					// Read bytes to new file
-					byte[] mybytearray = new byte[1024];
-				    InputStream is = socket.getInputStream();
-				    FileOutputStream fos = new FileOutputStream(path);
-				    BufferedOutputStream bos = new BufferedOutputStream(fos);
-				    int bytesRead = is.read(mybytearray, 0, mybytearray.length);
-				    bos.write(mybytearray, 0, bytesRead);
-				    bos.flush();
-				} catch (Exception e) {
-					System.out.println("Error: " + e.getMessage());
-				}
-			}
-		});
-		
-		// Start the thread
-		thread.start();
-		
-		// Wait for the thread to finish1
-		try {
-			thread.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+
+		// Send request to server
+		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+		out.writeObject(request);
+		out.flush();
+
+		// Read response from server
+		// Create new ObjectInputSream
+		ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+		// Read if file exists
+		boolean fileExists = in.readBoolean();
+
+		if (fileExists) {
+			// Read length of file
+			int fileLength = (Integer) in.readObject();
+			byte[] bytes = new byte[fileLength];
+
+			InputStream is = socket.getInputStream();
+			FileOutputStream fos = new FileOutputStream(path);
+			BufferedOutputStream bos = new BufferedOutputStream(fos);
+
+			// Write bytes to file
+			System.out.println("Downloading...");
+			int bytesRead = is.read(bytes, 0, bytes.length);
+			bos.write(bytes, 0, bytesRead);
+			bos.flush();
+			System.out.println("Download Complete!");
+		} else {
+			System.out.println(filename + " was not found!");
 		}
+	}
+
+	/**
+	 * Close the socket connection to the server to free up resources.
+	 * @throws IOException
+	 */
+	public void closeConnection() throws IOException {
+		// The message to send to the server
+		final String request = "POST /logout HTTP/1.1";
+
+		// Send request to server
+		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+		out.writeObject(request);
+		out.flush();
+		out.close();
+		socket.close();
 	}
 }

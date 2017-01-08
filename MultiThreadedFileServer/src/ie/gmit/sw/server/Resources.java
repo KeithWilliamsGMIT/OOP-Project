@@ -14,17 +14,25 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Resources {
+	private String path;
+	
+	// Constructor
+	public Resources(String path) {
+		super();
+		this.path = path;
+	}
+	
 	/**
 	 * @param The path to the directory where the files are stored.
 	 * @return List of filenames that were stored in the given directory.
 	 */
 	// Adapted from http://stackoverflow.com/questions/5694385/getting-the-filenames-of-all-files-in-a-folder
-	public List<String> getFileNames(String directory) {
+	public List<String> getFileNames() {
 		List<String> filenames = new ArrayList<String>();
 
 		// If this pathname does not denote a directory
 		// then listFiles() returns null
-		File[] files = new File(directory).listFiles();
+		File[] files = new File(path).listFiles();
 		
 		for (File file : files) {
 			if (file.isFile()) {
@@ -36,12 +44,11 @@ public class Resources {
 	}
 	
 	/**
-	 * @param directory The path to the directory where the file is stored.
 	 * @param filename The name of the file in the directory to download.
 	 * @return
 	 */
-	public File getFile(String directory, String filename) {
-		File file = new File(directory + "/" + filename);
+	public File getFile(String filename) {
+		File file = new File(path + "/" + filename);
 		return file;
 	}
 }

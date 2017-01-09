@@ -3,14 +3,6 @@
  * 7/1/2016
  */
 
-/**
- * The RequestLogger class is used by the server to write information
- * to a log file. Each client thread has a handle on the blocking queue.
- * When a request is made the client thread will add the request to this
- * queue (Producer). These requests are then taken from the blocking
- * queue and written to a file concurrently (Consumer).
- */
-
 package ie.gmit.sw.server.logger;
 
 import ie.gmit.sw.requests.PoisonRequest;
@@ -22,6 +14,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * The RequestLogger class is used by the server to write information
+ * to a log file. Each client thread has a handle on the blocking queue.
+ * When a request is made the client thread will add the request to this
+ * queue (Producer). These requests are then taken from the blocking
+ * queue and written to a file concurrently (Consumer).
+ */
 public class RequestLogger implements Runnable {
 	private final String FILENAME = "log.txt";
 	private BlockingQueue<Requestable> queue; // Aggregation

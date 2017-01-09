@@ -1,5 +1,5 @@
 <client-config username="gmit-w2016">
 	<server-host>127.0.0.1</server-host>
 	<server-port>7777</server-port>
-	<download-dir>./downloads/</download-dir>
+	<download-dir>../../OOP-Test/</download-dir>
 </client-config>

@@ -3,13 +3,6 @@
  * 2/12/2016
  */
 
-/**
- * The FileSever class starts and shuts down the server. When
- * the server starts it spawns two threads. One to listen for
- * clients and one to log information. When the server shuts
- * down, it gracefully stops these to threads.
- */
-
 package ie.gmit.sw.server;
 
 import ie.gmit.sw.requests.Requestable;
@@ -21,12 +14,18 @@ import java.net.ServerSocket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * The FileSever class starts and shuts down the server. When
+ * the server starts it spawns two threads. One to listen for
+ * clients and one to log information. When the server shuts
+ * down, it gracefully stops these to threads.
+ */
 public class FileServer {
 	private int port;
 	private String path;
 	private ServerSocket ss;
 	private BlockingQueue<Requestable> loggingQueue;
-	private Listener listener;
+	private Listener listener; // Full Composition
 
 	// Constructor
 	public FileServer(int port, String path) {
@@ -38,7 +37,8 @@ public class FileServer {
 
 	// Methods
 	/**
-	 * Start the server.
+	 * Start the server. Create a new Listener thread and
+	 * RequestLogger thread.
 	 * @throws IOException
 	 */
 	public void startServer() throws IOException {
@@ -57,7 +57,7 @@ public class FileServer {
 	}
 
 	/**
-	 * Shutdown the server gracefully.
+	 * Shutdown the server gracefully after all clients are finished.
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */

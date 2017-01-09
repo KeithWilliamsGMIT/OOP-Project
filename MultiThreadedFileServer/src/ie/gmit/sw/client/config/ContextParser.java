@@ -3,19 +3,19 @@
  * 2/12/2016
  */
 
-/**
- * The ContextParser is used to parse a config file, in XML format,
- * containing information necessary for the client to connect to the
- * server.
- */
-
 package ie.gmit.sw.client.config;
+
+import ie.gmit.sw.client.Context;
 
 import javax.xml.parsers.*;
 
 import org.w3c.dom.*;
 
-public class ContextParser {
+/**
+ * The ContextParser is used to parse a XML config file containing
+ * information necessary for the client to connect to the server.
+ */
+public class ContextParser implements Parseator {
 	private Context context; // Aggregation
 	
 	// Constructors
@@ -63,9 +63,5 @@ public class ContextParser {
 				}
 			}
 		}
-	}
-
-	public Context getContext() {
-		return context;
 	}
 }

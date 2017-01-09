@@ -3,17 +3,14 @@
  * 2/12/2016
  */
 
+package ie.gmit.sw.client;
+
+import java.util.Scanner;
+
 /**
  * The UI class is responsible for input and output of the
  * client side application.
  */
-
-package ie.gmit.sw.client;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-
 public class UI {
 	private Connection connection; // Aggregation
 	
@@ -63,13 +60,13 @@ public class UI {
 				case 2:
 					// Query the server and display the list of files
 					// that are available for download
-					List<String> filenames = new ArrayList<String>(connection.requestFilenames());
+					String[] filenames = connection.requestFilenames();
 					 
-					System.out.println("There are " + filenames.size() + " file(s) available to download from the server");
+					System.out.println("There are " + filenames.length + " file(s) available to download from the server");
 					
 					// Iterate through the list and print file names
-					for (int i = 0; i < filenames.size(); i++) {
-						System.out.println((i + 1) + ") " + filenames.get(i));
+					for (int i = 0; i < filenames.length; i++) {
+						System.out.println((i + 1) + ") " + filenames[i]);
 					}
 
 					break;

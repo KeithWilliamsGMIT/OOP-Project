@@ -3,6 +3,12 @@
  * 8/1/2016
  */
 
+package ie.gmit.sw;
+
+import ie.gmit.sw.server.FileServer;
+
+import java.util.Scanner;
+
 /**
  * A Runner class containing the main() method which starts
  * the server side application. The server requires two
@@ -11,13 +17,6 @@
  * the user can access. The server can be shutdown by typing
  * "EXIT".
  */
-
-package ie.gmit.sw;
-
-import ie.gmit.sw.server.FileServer;
-
-import java.util.Scanner;
-
 public class Server {
 	// Create a new server object if a port number and path
 	// are provided as command line arguments. Also allow

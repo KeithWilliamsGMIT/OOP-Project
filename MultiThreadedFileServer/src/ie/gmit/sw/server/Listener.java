@@ -3,13 +3,6 @@
  * 8/1/2016
  */
 
-/**
- * The Listener class listens for new clients trying to connect.
- * When a client tries to connect to the server, the listener
- * thread spawns a new ClientThread to accept requests from that
- * client.
- */
-
 package ie.gmit.sw.server;
 
 import ie.gmit.sw.requests.Requestable;
@@ -19,17 +12,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * The Listener class listens for new clients trying to connect.
+ * When a client tries to connect to the server, the listener
+ * thread spawns a new ClientThread to accept requests from that
+ * client.
+ */
 public class Listener implements Runnable {
 	private ServerSocket ss; // Aggregation
 	private BlockingQueue<Requestable> loggingQueue; // Aggregation
-	private Resources resources; // Aggregation
+	private String path;
 	private volatile boolean keepRunning = true;
 	
 	// Constructors
 	public Listener(ServerSocket ss, BlockingQueue<Requestable> loggingQueue, String path) {
 		this.ss = ss;
 		this.loggingQueue = loggingQueue;
-		this.resources = new Resources(path);
+		this.path = path;
 	}
 
 	// Methods
@@ -49,7 +48,7 @@ public class Listener implements Runnable {
 				Socket s = ss.accept();
 				
 				// Create a new thread for the new client
-				new Thread(new ClientThread(s, loggingQueue, resources), "ClientThread-" + counter).start();
+				new Thread(new ClientThread(s, loggingQueue, path), "ClientThread-" + counter).start();
 				counter++;
 			} catch (IOException e) {
 				System.out.println("ERROR: " + e.getMessage());

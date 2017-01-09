@@ -3,15 +3,10 @@
  * 16/12/2016
  */
 
-/**
- * A class responsible for connecting to the server and requesting resources
- * and closing the connection.
- */
-
 package ie.gmit.sw.client;
 
-import ie.gmit.sw.client.config.Context;
-import ie.gmit.sw.requests.*;
+import ie.gmit.sw.requests.Requestable;
+import ie.gmit.sw.requests.Request;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -20,8 +15,11 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.List;
 
+/**
+ * A class responsible for connecting to the server and requesting resources
+ * and closing the connection.
+ */
 public class Connection {
 	private Socket socket; // Full composition
 	private Context context; // Aggregation
@@ -37,17 +35,17 @@ public class Connection {
 	 * contained in the Context object.
 	 * @throws Exception
 	 */
-	public void openSocket() throws Exception {
+	public void openSocket() throws IOException {
 		socket = new Socket(context.getHost(), context.getPort());
 	}
 
 	/**
-	 * Retrieve a list of filenames that are available to
+	 * Retrieve an array of filenames that are available to
 	 * download from the server.
 	 * @return List of filenames.
 	 * @throws Exception 
 	 */
-	public List<String> requestFilenames() throws Exception {
+	public String[] requestFilenames() throws Exception {
 		// The request to send to the server
 		Requestable request = new Request("/files", socket.getLocalAddress().toString());
 
@@ -58,7 +56,7 @@ public class Connection {
 
 		// Deserialise list of strings
 		ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-		List<String> filenames = (List<String>) in.readObject();
+		String[] filenames = (String[]) in.readObject();
 		
 		return filenames;
 	}

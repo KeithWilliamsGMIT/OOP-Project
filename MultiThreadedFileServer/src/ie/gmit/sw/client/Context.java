@@ -3,12 +3,12 @@
  * 2/12/2016
  */
 
+package ie.gmit.sw.client;
+
 /**
- * A bean class containing variables available to the client.
+ * A bean class containing variables needed by the client
+ * in order to be able to connect to the server.
  */
-
-package ie.gmit.sw.client.config;
-
 public class Context {
 	public static final String CONF_FILE = "client-config.xml";
 	private String username;

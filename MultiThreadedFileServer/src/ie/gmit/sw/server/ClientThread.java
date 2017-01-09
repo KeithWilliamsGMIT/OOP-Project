@@ -3,14 +3,9 @@
  * 8/1/2016
  */
 
-/**
- * When a client connects to the server, a new ClientThread is created
- * and is assigned to the client, making it a multi-threaded server.
- */
-
 package ie.gmit.sw.server;
 
-import ie.gmit.sw.requests.*;
+import ie.gmit.sw.requests.Requestable;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -21,28 +16,33 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-// A new ClientThread class is created for each new client.
+/**
+ * When a client connects to the server, a new ClientThread is created
+ * and is assigned to the client, making it a multi-threaded server.
+ */
 public class ClientThread implements Runnable {
 	private Socket socket; // Aggregation
 	private BlockingQueue<Requestable> loggingQueue; // Aggregation
-	private Resources resources; // Aggregation
+	private String path;
 	private volatile boolean keepRunning = true;
 
 	// Constructors
-	public ClientThread(Socket request, BlockingQueue<Requestable> loggingQueue, Resources resources) {
-		this.socket = request;
+	public ClientThread(Socket socket, BlockingQueue<Requestable> loggingQueue, String path) {
+		this.socket = socket;
 		this.loggingQueue = loggingQueue;
-		this.resources = resources;
+		this.path = path;
 	}
 	
+	// Methods
 	/**
 	 * Continue to receive requests from the client until they exit or
 	 * a connection problem occurs. Once this method terminates, the
 	 * client will be unable to make any further requests. When a
-	 * request is received, the thread will send a different resource
-	 * to the client based on the request.
+	 * request is received the thread will do 
 	 */
 	public void run() {
 		// Keep the thread alive
@@ -52,7 +52,8 @@ public class ClientThread implements Runnable {
 			try {
 				// Read and print the request
 				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-				Requestable request = (Request)in.readObject();
+				Requestable request = (Requestable)in.readObject();
+				request.setStatus("INFO");
 				String[] paths = request.getCommand().split("/", 3);
 
 				try {
@@ -66,16 +67,16 @@ public class ClientThread implements Runnable {
 						// Stop the while loop so that this thread will not
 						// accept any more requests from the client.
 						keepRunning = false;
+					} else {
+						request.setStatus("WARNING");
 					}
-
-					// Add to logger queue
-					loggingQueue.put(request);
 				} catch (Exception e) {
-					// Add to logger queue
-					loggingQueue.put(request);
-
+					request.setStatus("ERROR");
 					System.out.println("ERROR: " + e.getMessage() + " from " +  socket.getRemoteSocketAddress());
 				}
+				
+				// Add to logger queue
+				loggingQueue.put(request);
 			} catch (SocketException se) {
 				// Stop the while loop so that this thread will not accept any
 				// more requests from the client if a SocketException occurs.
@@ -96,16 +97,36 @@ public class ClientThread implements Runnable {
 		}
 	}
 
-	// Send a list of filenames to the client
+	// Send an array of filenames to the client
 	private void getFilenames() throws IOException {
+		// Use linked list because added to the end is an 0(1) operation
+		List<String> filenameList = new LinkedList<String>();
+
+		// If the path does not denote a directory
+		// then listFiles() returns null
+		File[] files = new File(path).listFiles();
+		
+		if (files != null) {
+			for (File file : files) {
+				if (file.isFile()) {
+					filenameList.add(file.getName());
+				}
+			}
+		}
+		
+		// Convert list to array
+		String[] filenames = filenameList.toArray(new String[filenameList.size()]);
+		
+		// Write to client
 		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-		out.writeObject(resources.getFileNames());
+		out.writeObject(filenames);
 		out.flush();
 	}
 
-	// Write a file to the output stream
+	// Write a file, requested by the client, to the output stream
+	// if the file exists on the server.
 	private void downloadFile(String filename) throws IOException {
-		File file = resources.getFile(filename);
+		File file = new File(path + "/" + filename);
 
 		// Create new ObjectOutputStream
 		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
